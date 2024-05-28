@@ -2,7 +2,12 @@ TEMPLATE = app
 CONFIG += console c++11
 CONFIG -= app_bundle
 CONFIG -= qt
-
+INCLUDEPATH += /opt/X11/include
+LIBS += -lX11 -L/opt/X11/lib
+macx {
+    QMAKE_CXXFLAGS += -Dsun
+    }
+    
 SOURCES +=\
     diskio.cc \
     main.cc \
@@ -33,4 +38,3 @@ HEADERS += \
     usim.h \
 
 
-LIBS += -lX11
