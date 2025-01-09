@@ -6,28 +6,31 @@
 //	(C) R.P.Bellis 1993
 //
 
-#ifndef __mc6809_h__
-#define __mc6809_h__
+#pragma once
 
+#include <string>
+#include "wiring.h"
 #include "usim.h"
+#include "bits.h"
+
+#ifndef USIM_MACHDEP_H
 #include "machdep.h"
+#endif
 
 class mc6809 : virtual public USimMotorola {
 
-// Processor addressing modes
-protected:
+protected: // Processor addressing modes
 
 	enum {
-				immediate = 0,
-				relative = 0,
-				inherent,
-				extended,
+				immediate,
 				direct,
-				indexed
+				indexed,
+				extended,
+				inherent,
+				relative
 	} mode;
 
-// Processor registers
-protected:
+protected:	// Processor registers
 
 	Word			u, s;		// Stack pointers
 	Word			x, y;		// Index registers
@@ -72,19 +75,25 @@ protected:
 		} bit;
 	} cc;
 
-private:
+private:	// internal processor state
+	bool			waiting_sync;
+	bool			waiting_cwai;
+	bool			nmi_previous;
 
-	Word&			refreg(Byte);
-	Byte&			byterefreg(int);
-	Word&			wordrefreg(int);
+private:	// instruction and operand fetch and decode
+	Word&			ix_refreg(Byte);
 
-	Byte			fetch_operand(void);
-	Word			fetch_word_operand(void);
-	Word			fetch_effective_address(void);
-	Word			do_effective_address(Byte);
-	void			do_predecrement(Byte);
-	void			do_postincrement(Byte);
+	void			fetch_instruction();
+	Byte			fetch_operand();
+	Word			fetch_word_operand();
+	Word			fetch_effective_address();
+	Word			fetch_indexed_operand();
+	void			execute_instruction();
 
+	void			do_predecrement();
+	void			do_postincrement();
+
+private:	// instruction implementations
 	void			abx();
 	void			adca(), adcb();
 	void			adda(), addb(), addd();
@@ -145,13 +154,7 @@ private:
 	void			tfr();
 	void			tsta(), tstb(), tst();
 
-	void			do_br(int);
-	void			do_lbr(int);
-
-	void			do_nmi(void);
-	void			do_firq(void);
-	void			do_irq(void);
-
+protected:	// helper functions
 	void			help_adc(Byte&);
 	void			help_add(Byte&);
 	void			help_and(Byte&);
@@ -181,16 +184,85 @@ private:
 	void			help_sub(Word&);
 	void			help_tst(Byte);
 
-protected:
-	virtual void		execute(void);
+protected:	// overloadable functions (e.g. for breakpoints)
+	virtual void		do_br(const char *, bool);
+	virtual void		do_lbr(const char *, bool);
+
+	virtual void		do_psh(Word& sp, Byte);
+	virtual void		do_psh(Word& sp, Word);
+	virtual void		do_pul(Word& sp, Byte&);
+	virtual void		do_pul(Word& sp, Word&);
+
+	virtual void		do_nmi();
+	virtual void		do_firq();
+	virtual void		do_irq();
+
+	virtual void		pre_exec();
+	virtual void		post_exec();
+
+protected: 	// instruction tracing
+	Word			insn_pc;
+	const char*		insn;
+	Byte			post;
+	Word			operand;
+
+	std::string		disasm_operand();
+	std::string		disasm_indexed();
+
+public:		// external signal pins
+	InputPin		IRQ, FIRQ, NMI;
 
 public:
-				mc6809();		// public constructor
+					mc6809();		// public constructor
 	virtual			~mc6809();		// public destructor
 
-	virtual void		reset(void);		// CPU reset
-	virtual void		status(void);
+	virtual void	reset();		// CPU reset
+	virtual void	tick();
+
+	virtual void	print_regs();
+
+	Byte&			byterefreg(int);
+	Word&			wordrefreg(int);
 
 };
 
-#endif // __mc6809_h__
+inline void mc6809::do_br(const char *mnemonic, bool test)
+{
+	(void)mnemonic;
+	Word offset = extend8(fetch_operand());
+	if (test) pc += offset;
+	++cycles;
+}
+
+inline void mc6809::do_lbr(const char *mnemonic, bool test)
+{
+	(void)mnemonic;
+	Word offset = fetch_word_operand();
+	if (test) {
+		pc += offset;
+		++cycles;
+	}
+	++cycles;
+}
+
+inline void mc6809::do_psh(Word& sp, Byte val)
+{
+	write(--sp, val);
+}
+
+inline void mc6809::do_psh(Word& sp, Word val)
+{
+	write(--sp, (Byte)val);
+	write(--sp, (Byte)(val >> 8));
+}
+
+inline void mc6809::do_pul(Word& sp, Byte& val)
+{
+	val = read(sp++);
+}
+
+inline void mc6809::do_pul(Word& sp, Word& val)
+{
+	val  = read(sp++) << 8;
+	val |= read(sp++);
+}

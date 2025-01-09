@@ -6,18 +6,19 @@
 //
 //
 
-#ifndef __typedefs_h__
-#define __typedefs_h__
+#pragma once
 
-#include "machdep.h"
+#ifdef __cplusplus
 
-typedef unsigned char	Byte;
-typedef unsigned short	Word;
+#include <cstddef>
+#include <cstdint>
 
-#if (MACH_INT_SIZE == 4)
-typedef unsigned int	DWord;
 #else
-typedef unsigned long	DWord;
+
+#include <stdint.h>
+
 #endif
 
-#endif // __typedefs_h__
+typedef uint8_t		Byte;
+typedef uint16_t	Word;
+typedef uint32_t	DWord;
