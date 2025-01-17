@@ -19,11 +19,6 @@
 extern "C" unsigned int alarm(unsigned int);
 #endif
 
-//#ifndef sun
-//typedef void SIG_FUNC_TYP(int);
-//typedef SIG_FUNC_TYPE *SIG_FP;
-//#endif
-
 #ifndef DEVICE
 # define DEVICE uartdevice
 #endif
@@ -32,11 +27,7 @@ class DEVICE *sys;
 
 #ifndef DEBUG
 #ifdef SIGALRM
-#ifdef sun
-void update(int, ...)
-#else
 void update(int)
-#endif
 {
     if (sys) {
         sys->status();
@@ -58,12 +49,12 @@ void killed(int sig) {
 
 int main(int argc, char *argv[])
 {
-	if (argc != 2) {
-		fprintf(stderr, "usage: usim <hexfile>\r\n");
-		return EXIT_FAILURE;
-	}
+    if (argc != 2) {
+	fprintf(stderr, "usage: usim <hexfile>\r\n");
+	return EXIT_FAILURE;
+    }
     sys = new DEVICE();
-	(void)signal(SIGINT, killed);
+    (void)signal(SIGINT, killed);
     (void)signal(SIGTERM, killed);
     (void)signal(SIGHUP, killed);
 #ifndef DEBUG
