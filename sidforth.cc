@@ -90,7 +90,7 @@ int sidforth::xterm()
 
     // launch an xterm that uses the pseudo-terminal master we have opened
     char xterm_command[200];
-    sprintf(xterm_command, "LANG=C xterm -fa 'Courier' -fs 10 +aw -bc -rv -T 'MC6809 UART serial terminal' -S%s/%d & echo $!", slave, masterfd);
+    sprintf(xterm_command, "LANG=C PATH=$PATH:/opt/X11/bin:/usr/bin/X11 xterm -fa 'Courier' -fs 10 +aw -bc -rv -T 'MC6809 UART serial terminal' -S%s/%d & echo $!", slave, masterfd);
     xterm_pipe = popen(xterm_command, "r");
     if (!xterm_pipe) {
         perror("UART: failed to start xterm");
