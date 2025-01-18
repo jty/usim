@@ -20,7 +20,8 @@ extern "C" unsigned int alarm(unsigned int);
 #endif
 
 #ifndef DEVICE
-# define DEVICE uartdevice
+//# define DEVICE uartdevice
+# define DEVICE sidforth
 #endif
 
 class DEVICE *sys;
