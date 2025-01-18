@@ -6,7 +6,7 @@ INCLUDEPATH += /opt/X11/include
 LIBS += -lX11 -L/opt/X11/lib
 macx {
     QMAKE_CXXFLAGS += -Dsun
-    }
+}
     
 SOURCES +=\
     diskio.cc \
